@@ -73,4 +73,5 @@ plt.text(
     verticalalignment='top',
     bbox=dict(facecolor='white', alpha=0.7)
 )
+plt.savefig("results/diagonality.png")
 plt.show()
