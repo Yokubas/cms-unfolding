@@ -1,0 +1,15 @@
+# VS Code settings
+**/.vscode/
+
+# Mac system files
+**/.DS_Store
+
+# Python caches
+**/__pycache__/
+
+# model
+*.h5
+*.pkl
+
+# root files
+*.root
