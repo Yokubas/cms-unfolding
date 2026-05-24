@@ -17,13 +17,32 @@ def build_electrons(events):
     electron = ak.zip(
         {
             "pt_reco": events["Electron_pt"],
-            "pt_truth": events["GenDressedLepton_pt"]
-            
+            "pt_truth": events["GenDressedLepton_pt"],
+            "eta_reco": events["Electron_eta"],
+            "eta_truth": events["GenDressedLepton_eta"],
+            "phi_reco": events["Electron_phi"],
+            "phi_truth": events["GenDressedLepton_phi"],
+            "energy_reco": np.sqrt(events["Electron_pt"]**2 * np.cosh(events["Electron_eta"])**2),
+            "energy_truth": np.sqrt(events["GenDressedLepton_pt"]**2 * np.cosh(events["GenDressedLepton_eta"])**2),
+
         },
         with_name="Momentum4D"
     )
     weights = events["genWeight"] if "genWeight" in events.fields else None
     return electron, weights
+
+def z_mass_numpy(leps):
+    # Convert to numpy
+    l0 = ak.to_numpy(leps[:,0])
+    l1 = ak.to_numpy(leps[:,1])
+
+    # compute px, py, pz, E in numpy
+    pxZ = l0["pt"]*np.cos(l0["phi"]) + l1["pt"]*np.cos(l1["phi"])
+    pyZ = l0["pt"]*np.sin(l0["phi"]) + l1["pt"]*np.sin(l1["phi"])
+    pzZ = l0["pt"]*np.sinh(l0["eta"]) + l1["pt"]*np.sinh(l1["eta"])
+    EZ  = l0["energy"] + l1["energy"]
+
+    return np.sqrt(EZ**2 - pxZ**2 - pyZ**2 - pzZ**2)
 
 def prepare_input(arr):
     df = pd.DataFrame()
@@ -124,14 +143,26 @@ def process_mc(file, sigma, wsum, label, apply_nn_flag=False, model=None, scaler
     electrons, weights = build_electrons(events)
 
     scale = (sigma * L_int) * (entry/total_events) / wsum
+    weight = weights * scale
+    reco = ak.zip({
+        "pt": electrons["pt_reco"],
+        "eta": electrons["eta_reco"],
+        "phi": electrons["phi_reco"],
+        "energy": electrons["energy_reco"],
+        # "weights": weights * scale,
+        # "events": events
+    })
 
-    return {
-        "label": label,
-        "pt_reco": electrons["pt_reco"],
-        "pt_truth": electrons["pt_truth"],
-        "weights": weights * scale,
-        "events": events
-    }
+    truth = ak.zip({
+        "pt": electrons["pt_truth"],
+        "eta": electrons["eta_truth"],
+        "phi": electrons["phi_truth"],
+        "energy": electrons["energy_truth"],
+        # "weights": weights * scale,
+        # "events": events
+    })
+
+    return reco, truth, weight
 
 def apply_nn(events, model, scaler, threshold):
     prepared = prepare_input(events)
