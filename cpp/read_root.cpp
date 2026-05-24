@@ -74,8 +74,8 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     Float_t GenDressedLepton_phi[100];
     UInt_t nGenDressedLepton;
 
-    Float_t out_Electron_pt[2];
-    Float_t out_GenDressedLepton_pt[2];
+    Float_t out_Electron_pt[2], out_Electron_phi[2], out_Electron_eta[2];
+    Float_t out_GenDressedLepton_pt[2], out_GenDressedLepton_phi[2], out_GenDressedLepton_eta[2];
     sumGenWeight = 0;
 
     tree->SetBranchStatus("genWeight", true);
@@ -100,6 +100,10 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
 
     outTree->Branch("Electron_pt", &out_Electron_pt, "Electron_pt[2]/F");
     outTree->Branch("GenDressedLepton_pt", &out_GenDressedLepton_pt, "GenDressedLepton_pt[2]/F");
+    outTree->Branch("Electron_phi", &out_Electron_phi, "Electron_phi[2]/F");
+    outTree->Branch("GenDressedLepton_phi", &out_GenDressedLepton_phi, "GenDressedLepton_phi[2]/F");
+    outTree->Branch("Electron_eta", &out_Electron_eta, "Electron_eta[2]/F");
+    outTree->Branch("GenDressedLepton_eta", &out_GenDressedLepton_eta, "GenDressedLepton_eta[2]/F");
 
     outTree->Branch("genWeight", &out_genWeight, "genWeight/F");
 
@@ -171,8 +175,20 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
                         out_GenDressedLepton_pt[0] = GenDressedLepton_pt[bestGen1];
                         out_GenDressedLepton_pt[1] = GenDressedLepton_pt[bestGen2];
 
+                        out_GenDressedLepton_eta[0] = GenDressedLepton_eta[bestGen1];
+                        out_GenDressedLepton_eta[1] = GenDressedLepton_eta[bestGen2];
+
+                        out_GenDressedLepton_phi[0] = GenDressedLepton_phi[bestGen1];
+                        out_GenDressedLepton_phi[1] = GenDressedLepton_phi[bestGen2];
+
                         out_Electron_pt[0]  = Electron_pt[leading];
                         out_Electron_pt[1]  = Electron_pt[subleading];
+
+                        out_Electron_eta[0]  = Electron_eta[leading];
+                        out_Electron_eta[1]  = Electron_eta[subleading];
+
+                        out_Electron_phi[0]  = Electron_phi[leading];
+                        out_Electron_phi[1]  = Electron_phi[subleading];
                         
                         out_genWeight = genWeight;
 
