@@ -55,6 +55,16 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     tree->SetBranchStatus("Electron_eta", true);
     tree->SetBranchStatus("Electron_pt", true);
     tree->SetBranchStatus("HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ", true);
+    // Training
+    tree->SetBranchStatus("Electron_miniPFRelIso_all", true);
+    tree->SetBranchStatus("Electron_sieie", true);
+    tree->SetBranchStatus("Electron_dxy", true);
+    tree->SetBranchStatus("Electron_dz", true);
+    tree->SetBranchStatus("Electron_hoe", true);
+    tree->SetBranchStatus("Electron_scEtOverPt", true);
+    tree->SetBranchStatus("Electron_eInvMinusPInv", true);
+    tree->SetBranchStatus("Electron_r9", true);
+    tree->SetBranchStatus("Electron_deltaEtaSC", true);
 
     tree->SetBranchStatus("GenDressedLepton_eta", true);
     tree->SetBranchStatus("GenDressedLepton_phi", true);
@@ -65,6 +75,10 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     UInt_t nElectron;
     Float_t out_genWeight;
     Float_t Electron_phi[100], Electron_eta[100], Electron_pt[100], Electron_pfRelIso03_all[100];
+    // Training
+    Float_t Electron_miniPFRelIso_all[100], Electron_sieie[100], Electron_dxy[100], Electron_dz[100], Electron_hoe[100], Electron_scEtOverPt[100];
+    Float_t Electron_eInvMinusPInv[100], Electron_r9[100], Electron_deltaEtaSC[100];
+    
     Int_t Electron_cutBased[100];
     Float_t genWeight = 1.0;
     Bool_t HLT_Ele23_Ele12;
@@ -73,6 +87,10 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     Float_t GenDressedLepton_eta[100];
     Float_t GenDressedLepton_phi[100];
     UInt_t nGenDressedLepton;
+
+    // Training out
+    Float_t out_Electron_miniPFRelIso_all[2], out_Electron_sieie[2], out_Electron_dxy[2], out_Electron_dz[2], out_Electron_hoe[2], out_Electron_scEtOverPt[2];
+    Float_t out_Electron_eInvMinusPInv[2], out_Electron_r9[2], out_Electron_deltaEtaSC[2];
 
     Float_t out_Electron_pt[2], out_Electron_phi[2], out_Electron_eta[2];
     Float_t out_GenDressedLepton_pt[2], out_GenDressedLepton_phi[2], out_GenDressedLepton_eta[2];
@@ -90,6 +108,16 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     tree->SetBranchAddress("Electron_pfRelIso03_all", &Electron_pfRelIso03_all);
     tree->SetBranchAddress("HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ", &HLT_Ele23_Ele12);
 
+    tree->SetBranchAddress("Electron_miniPFRelIso_all", &Electron_miniPFRelIso_all);
+    tree->SetBranchAddress("Electron_sieie", &Electron_sieie);
+    tree->SetBranchAddress("Electron_dxy", &Electron_dxy);
+    tree->SetBranchAddress("Electron_dz", &Electron_dz);
+    tree->SetBranchAddress("Electron_hoe", &Electron_hoe);
+    tree->SetBranchAddress("Electron_scEtOverPt", &Electron_scEtOverPt);
+    tree->SetBranchAddress("Electron_eInvMinusPInv", &Electron_eInvMinusPInv);
+    tree->SetBranchAddress("Electron_r9", &Electron_r9);
+    tree->SetBranchAddress("Electron_deltaEtaSC", &Electron_deltaEtaSC);
+
     tree->SetBranchAddress("GenDressedLepton_eta", &GenDressedLepton_eta);
     tree->SetBranchAddress("GenDressedLepton_phi", &GenDressedLepton_phi);
     tree->SetBranchAddress("GenDressedLepton_pt", &GenDressedLepton_pt);
@@ -104,6 +132,16 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     outTree->Branch("GenDressedLepton_phi", &out_GenDressedLepton_phi, "GenDressedLepton_phi[2]/F");
     outTree->Branch("Electron_eta", &out_Electron_eta, "Electron_eta[2]/F");
     outTree->Branch("GenDressedLepton_eta", &out_GenDressedLepton_eta, "GenDressedLepton_eta[2]/F");
+
+    outTree->Branch("Electron_miniPFRelIso_all", &out_Electron_miniPFRelIso_all, "Electron_miniPFRelIso_all[2]/F");
+    outTree->Branch("Electron_sieie", &out_Electron_sieie, "Electron_sieie[2]/F");
+    outTree->Branch("Electron_dxy", &out_Electron_dxy, "Electron_dxy[2]/F");
+    outTree->Branch("Electron_dz", &out_Electron_dz, "Electron_dz[2]/F");
+    outTree->Branch("Electron_hoe", &out_Electron_hoe, "Electron_hoe[2]/F");
+    outTree->Branch("Electron_scEtOverPt", &out_Electron_scEtOverPt, "Electron_scEtOverPt[2]/F");
+    outTree->Branch("Electron_eInvMinusPInv", &out_Electron_eInvMinusPInv, "Electron_eInvMinusPInv[2]/F");
+    outTree->Branch("Electron_r9", &out_Electron_r9, "Electron_r9[2]/F");
+    outTree->Branch("Electron_deltaEtaSC", &out_Electron_deltaEtaSC, "Electron_deltaEtaSC[2]/F");
 
     outTree->Branch("genWeight", &out_genWeight, "genWeight/F");
 
@@ -190,6 +228,33 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
                         out_Electron_phi[0]  = Electron_phi[leading];
                         out_Electron_phi[1]  = Electron_phi[subleading];
                         
+                        out_Electron_miniPFRelIso_all[0] = Electron_miniPFRelIso_all[leading];
+                        out_Electron_miniPFRelIso_all[1] = Electron_miniPFRelIso_all[subleading];
+
+                        out_Electron_sieie[0] = Electron_sieie[leading];
+                        out_Electron_sieie[1] = Electron_sieie[subleading];
+
+                        out_Electron_dxy[0] = Electron_dxy[leading];
+                        out_Electron_dxy[1] = Electron_dxy[subleading];
+
+                        out_Electron_dz[0] = Electron_dz[leading];
+                        out_Electron_dz[1] = Electron_dz[subleading];
+
+                        out_Electron_hoe[0] = Electron_hoe[leading];
+                        out_Electron_hoe[1] = Electron_hoe[subleading];
+
+                        out_Electron_scEtOverPt[0] = Electron_scEtOverPt[leading];
+                        out_Electron_scEtOverPt[1] = Electron_scEtOverPt[subleading];
+
+                        out_Electron_eInvMinusPInv[0] = Electron_eInvMinusPInv[leading];
+                        out_Electron_eInvMinusPInv[1] = Electron_eInvMinusPInv[subleading];
+
+                        out_Electron_r9[0] = Electron_r9[leading];
+                        out_Electron_r9[1] = Electron_r9[subleading];
+                        
+                        out_Electron_deltaEtaSC[0] = Electron_deltaEtaSC[leading];
+                        out_Electron_deltaEtaSC[1] = Electron_deltaEtaSC[subleading];
+
                         out_genWeight = genWeight;
 
                         outTree->Fill();
