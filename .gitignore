@@ -13,3 +13,9 @@
 
 # root files
 *.root
+
+*.keras
+
+*.pkl
+
+*.pyc
