@@ -2,8 +2,8 @@ import uproot
 import awkward as ak
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+import sklearn.model_selection
+import sklearn.preprocessing
 import joblib
  
 import tensorflow as tf
@@ -105,10 +105,10 @@ rpt = np.concatenate([rpt_high, rpt_low], axis=0)
 # 2. Train / val / test split
 # ─────────────────────────────────────────────
  
-X_train, X_temp, y_train, y_temp, rpt_train, rpt_temp = train_test_split(
+X_train, X_temp, y_train, y_temp, rpt_train, rpt_temp = sklearn.model_selection.train_test_split(
     X, y, rpt, test_size=0.30, random_state=42
 )
-X_val, X_test, y_val, y_test, rpt_val, rpt_test = train_test_split(
+X_val, X_test, y_val, y_test, rpt_val, rpt_test = sklearn.model_selection.train_test_split(
     X_temp, y_temp, rpt_temp, test_size=0.50, random_state=42
 )
  
@@ -118,7 +118,7 @@ print(f"Train: {len(X_train):,}  |  Val: {len(X_val):,}  |  Test: {len(X_test):,
 # 3. Feature scaling  (StandardScaler on X only)
 # ─────────────────────────────────────────────
  
-scaler = StandardScaler()
+scaler = sklearn.preprocessing.StandardScaler()
 X_train_s = scaler.fit_transform(X_train)
 X_val_s   = scaler.transform(X_val)
 X_test_s  = scaler.transform(X_test)

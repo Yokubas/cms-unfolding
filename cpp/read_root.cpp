@@ -65,7 +65,7 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     tree->SetBranchStatus("Electron_eInvMinusPInv", true);
     tree->SetBranchStatus("Electron_r9", true);
     tree->SetBranchStatus("Electron_deltaEtaSC", true);
-
+    
     tree->SetBranchStatus("GenDressedLepton_eta", true);
     tree->SetBranchStatus("GenDressedLepton_phi", true);
     tree->SetBranchStatus("GenDressedLepton_pt", true);
