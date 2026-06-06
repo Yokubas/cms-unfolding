@@ -3,171 +3,131 @@ import awkward as ak
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
+ 
+# ─────────────────────────────────────────────
+# I/O helpers
+# ─────────────────────────────────────────────
+ 
 def load_dataset(root_file, max_events=None):
-    
     file = uproot.open(root_file)
     tree = file["Events"]
-    data = tree.arrays(library = "ak", entry_stop = max_events)
-
+    data = tree.arrays(library="ak", entry_stop=max_events)
     return data
-
+ 
+ 
 def build_electrons(events):
-  
     electron = ak.zip(
         {
-            "pt_reco": events["Electron_pt"],
-            "pt_truth": events["GenDressedLepton_pt"],
-            "eta_reco": events["Electron_eta"],
-            "eta_truth": events["GenDressedLepton_eta"],
-            "phi_reco": events["Electron_phi"],
-            "phi_truth": events["GenDressedLepton_phi"],
-            "energy_reco": np.sqrt(events["Electron_pt"]**2 * np.cosh(events["Electron_eta"])**2),
+            "pt_reco":    events["Electron_pt"],
+            "pt_truth":   events["GenDressedLepton_pt"],
+            "eta_reco":   events["Electron_eta"],
+            "eta_truth":  events["GenDressedLepton_eta"],
+            "phi_reco":   events["Electron_phi"],
+            "phi_truth":  events["GenDressedLepton_phi"],
+            "energy_reco":  np.sqrt(events["Electron_pt"]**2         * np.cosh(events["Electron_eta"])**2),
             "energy_truth": np.sqrt(events["GenDressedLepton_pt"]**2 * np.cosh(events["GenDressedLepton_eta"])**2),
-
         },
         with_name="Momentum4D"
     )
     weights = events["genWeight"] if "genWeight" in events.fields else None
     return electron, weights
-
+ 
+ 
+# ─────────────────────────────────────────────
+# Kinematics
+# ─────────────────────────────────────────────
+ 
 def z_mass_numpy(leps):
-    # Convert to numpy
-    l0 = ak.to_numpy(leps[:,0])
-    l1 = ak.to_numpy(leps[:,1])
-
-    # compute px, py, pz, E in numpy
-    pxZ = l0["pt"]*np.cos(l0["phi"]) + l1["pt"]*np.cos(l1["phi"])
-    pyZ = l0["pt"]*np.sin(l0["phi"]) + l1["pt"]*np.sin(l1["phi"])
-    pzZ = l0["pt"]*np.sinh(l0["eta"]) + l1["pt"]*np.sinh(l1["eta"])
+    """Compute Z invariant mass from a 2-lepton array (using pt/eta/phi/energy fields)."""
+    l0 = ak.to_numpy(leps[:, 0])
+    l1 = ak.to_numpy(leps[:, 1])
+ 
+    pxZ = l0["pt"] * np.cos(l0["phi"])  + l1["pt"] * np.cos(l1["phi"])
+    pyZ = l0["pt"] * np.sin(l0["phi"])  + l1["pt"] * np.sin(l1["phi"])
+    pzZ = l0["pt"] * np.sinh(l0["eta"]) + l1["pt"] * np.sinh(l1["eta"])
     EZ  = l0["energy"] + l1["energy"]
+ 
+    return np.sqrt(np.maximum(EZ**2 - pxZ**2 - pyZ**2 - pzZ**2, 0))
+ 
+ 
+# ─────────────────────────────────────────────
+# NN — pT correction  (NEW)
+# ─────────────────────────────────────────────
 
-    return np.sqrt(EZ**2 - pxZ**2 - pyZ**2 - pzZ**2)
-
-def prepare_input(arr):
-    df = pd.DataFrame()
-
-    # df["nElectron"] = ak.to_numpy(ak.count_nonzero(arr["Electron_pt"] > 0, axis=1))
-    # df["nJet"] = ak.to_numpy(ak.count_nonzero(arr["Jet_pt"] > 0, axis=1))
-
-    # --- Electrons (leading 2) ---
-    electron_features = ["pt", "eta", "phi", "sieie", "hoe", 
-                         "dz", "dxy", "dr03TkSumPt", "scEtOverPt", 
-                         "miniPFRelIso_all", "eInvMinusPInv"]
+def build_correction_features(reco_pt, reco_eta, reco_phi):
+    return np.column_stack([
+        np.log(np.clip(reco_pt[:, 0], 1e-6, None)),
+        reco_eta[:, 0],
+        reco_phi[:, 0],
+        np.log(np.clip(reco_pt[:, 1], 1e-6, None)),
+        reco_eta[:, 1],
+        reco_phi[:, 1],
+    ])
+ 
+ 
+def apply_pt_correction(reco_pt, reco_eta, reco_phi, model, scaler):
+   
+    X        = build_correction_features(reco_pt, reco_eta, reco_phi)
+    X_scaled = scaler.transform(X)
+    factors  = model.predict(X_scaled, batch_size=4096, verbose=0)   # shape (N, 2)
+    return reco_pt * factors
+ 
+ 
+# ─────────────────────────────────────────────
+# MC processing pipeline
+# ─────────────────────────────────────────────
+ 
+def process_mc(
+    file, sigma, wsum, threshold=0.5,
+    L_int=8746231868.215154648 / 1e6,
+    entry=843234,
+    total_events=85388673,
+    # pT correction kwargs
+    apply_pt_correction_flag=False,
+    pt_correction_model=None,
+    pt_correction_scaler=None,
+):
     
-    for feature in electron_features:
-        if feature == "pt":
-            continue
-        padded = ak.pad_none(arr[f"Electron_{feature}"], 2)
-        for i in range(2):
-            df[f"Electron{i+1}_{feature}"] = ak.to_numpy(ak.fill_none(padded[:, i], 0))
-
-    padded_pt = ak.pad_none(arr["Electron_pt"], 2)
-
-    pt1 = ak.to_numpy(ak.fill_none(padded_pt[:, 0], 0))
-    pt2 = ak.to_numpy(ak.fill_none(padded_pt[:, 1], 0))
-
-    df["Electron_pt_ratio"] = np.log(pt1/pt2)
-
-    jet_features = ["pt", "eta", "phi", "btagDeepFlavB"]
-    for feature in jet_features:
-        padded = ak.pad_none(arr[f"Jet_{feature}"], 4)
-        for i in range(4):
-            df[f"Jet{i+1}_{feature}"] = ak.to_numpy(ak.fill_none(padded[:, i], 0))
-
-    photon_features = ["pt", "eta", "phi", "sieie", "hoe", "pfRelIso03_all"]
-    for feature in photon_features:
-        padded = ak.pad_none(arr[f"Photon_{feature}"], 2)
-        for i in range(2):
-            df[f"Photon{i+1}_{feature}"] = ak.to_numpy(ak.fill_none(padded[:, i], 0))
-
-    df["MET_phi"]          = ak.to_numpy(arr["MET_phi"])
-    df["MET_sumEt"]        = ak.to_numpy(arr["MET_sumEt"])
-    df["MET_significance"] = ak.to_numpy(arr["MET_significance"])
-
-    return df.reset_index(drop=True)
-
-def prepare_training(arr, label, process):
-    n_events = len(arr["Electron_pt"])  # number of events in this dataset
-    df = pd.DataFrame()
-    
-    df["label"] = [label] * n_events
-    df["process"] = process
-
-    # df["nElectron"] = ak.to_numpy(ak.count_nonzero(arr["Electron_pt"] > 0, axis=1))
-    # df["nJet"] = ak.to_numpy(ak.count_nonzero(arr["Jet_pt"] > 0, axis=1))
-
-    # --- Electrons (leading 2) ---
-    electron_features = ["pt", "eta", "phi", "sieie", "hoe", 
-                         "dz", "dxy", "dr03TkSumPt", "scEtOverPt", 
-                         "miniPFRelIso_all", "eInvMinusPInv"]
-    
-    for feature in electron_features:
-        if feature == "pt":
-            continue
-        padded = ak.pad_none(arr[f"Electron_{feature}"], 2)
-        for i in range(2):
-            df[f"Electron{i+1}_{feature}"] = ak.to_numpy(ak.fill_none(padded[:, i], 0))
-
-    padded_pt = ak.pad_none(arr["Electron_pt"], 2)
-
-    pt1 = ak.to_numpy(ak.fill_none(padded_pt[:, 0], 0))
-    pt2 = ak.to_numpy(ak.fill_none(padded_pt[:, 1], 0))
-
-    df["Electron_pt_ratio"] = np.log(pt1/pt2)
-
-    jet_features = ["pt", "eta", "phi", "btagDeepFlavB"]
-    for feature in jet_features:
-        padded = ak.pad_none(arr[f"Jet_{feature}"], 4)
-        for i in range(4):
-            df[f"Jet{i+1}_{feature}"] = ak.to_numpy(ak.fill_none(padded[:, i], 0))
-
-    photon_features = ["pt", "eta", "phi", "sieie", "hoe", "pfRelIso03_all"]
-    for feature in photon_features:
-        padded = ak.pad_none(arr[f"Photon_{feature}"], 2)
-        for i in range(2):
-            df[f"Photon{i+1}_{feature}"] = ak.to_numpy(ak.fill_none(padded[:, i], 0))
-    
-    df["MET_phi"]          = ak.to_numpy(arr["MET_phi"])
-    df["MET_sumEt"]        = ak.to_numpy(arr["MET_sumEt"])
-    df["MET_significance"] = ak.to_numpy(arr["MET_significance"])
-
-    return df.reset_index(drop=True)
-
-def process_mc(file, sigma, wsum, label, apply_nn_flag=False, model=None, scaler=None, threshold=0.5, L_int = 8746231868.215154648 / 1e6, entry = 843234, total_events = 85388673):
     events = load_dataset(file)
 
-    if apply_nn_flag:
-        events = apply_nn(events, model=model, scaler=scaler, threshold=threshold)
-
     electrons, weights = build_electrons(events)
-
-    scale = (sigma * L_int) * (entry/total_events) / wsum
+ 
+    scale  = (sigma * L_int) * (entry / total_events) / wsum
     weight = weights * scale
+ 
+    # ---- build reco array ------------------------------------------------
+    reco_pt  = ak.to_numpy(electrons["pt_reco"])
+    reco_eta = ak.to_numpy(electrons["eta_reco"])
+    reco_phi = ak.to_numpy(electrons["phi_reco"])
+ 
+    if apply_pt_correction_flag:
+        if pt_correction_model is None or pt_correction_scaler is None:
+            raise ValueError("Provide pt_correction_model and pt_correction_scaler.")
+        reco_pt = apply_pt_correction(
+            reco_pt, reco_eta, reco_phi,
+            model=pt_correction_model,
+            scaler=pt_correction_scaler,
+        )
+ 
+    # Recompute energy from (possibly corrected) pT
+    reco_energy = np.sqrt(reco_pt**2 * np.cosh(reco_eta)**2)
+ 
     reco = ak.zip({
-        "pt": electrons["pt_reco"],
-        "eta": electrons["eta_reco"],
-        "phi": electrons["phi_reco"],
-        "energy": electrons["energy_reco"],
-        # "weights": weights * scale,
-        # "events": events
+        "pt":     ak.from_numpy(reco_pt),
+        "eta":    ak.from_numpy(reco_eta),
+        "phi":    ak.from_numpy(reco_phi),
+        "energy": ak.from_numpy(reco_energy),
     })
-
+ 
     truth = ak.zip({
-        "pt": electrons["pt_truth"],
-        "eta": electrons["eta_truth"],
-        "phi": electrons["phi_truth"],
+        "pt":     electrons["pt_truth"],
+        "eta":    electrons["eta_truth"],
+        "phi":    electrons["phi_truth"],
         "energy": electrons["energy_truth"],
-        # "weights": weights * scale,
-        # "events": events
     })
-
+ 
     return reco, truth, weight
+ 
+ 
 
-def apply_nn(events, model, scaler, threshold):
-    prepared = prepare_input(events)
-    X = prepared.values
-    X_scaled = scaler.transform(X)
-    y_pred = model.predict(X_scaled, batch_size=1024)
-    mask = y_pred.flatten() > threshold
-    return events[mask]
+
