@@ -29,6 +29,11 @@ def build_arrays(events):
     eInvMinusPInv = ak.to_numpy(events["Electron_eInvMinusPInv"])
     r9 = ak.to_numpy(events["Electron_r9"])
     deltaEtaSC = ak.to_numpy(events["Electron_deltaEtaSC"])
+    PV_npvs = ak.to_numpy(events["PV_npvs"])
+    Pileup_nTrueInt = ak.to_numpy(events["Pileup_nTrueInt"])
+    rho = ak.to_numpy(events["fixedGridRhoFastjetAll"])
+    ip3d = ak.to_numpy(events["Electron_ip3d"])
+    energyErr = ak.to_numpy(events["Electron_energyErr"])
 
     true_pt  = ak.to_numpy(events["GenDressedLepton_pt"])
 
@@ -49,6 +54,12 @@ def build_arrays(events):
     r9 = r9[mask]
     deltaEtaSC = deltaEtaSC[mask]
 
+    PV_npvs = PV_npvs[mask]
+    Pileup_nTrueInt = Pileup_nTrueInt[mask]
+    rho = rho[mask]
+    ip3d  = ip3d[mask]
+    energyErr = energyErr[mask]
+
     true_pt   = true_pt[mask]
     
  
@@ -68,6 +79,11 @@ def build_arrays(events):
         eInvMinusPInv[:, 0],
         r9[:, 0],
         deltaEtaSC[:, 0],
+        # PV_npvs,
+        # Pileup_nTrueInt,
+        # rho,
+        # ip3d[:, 0],
+        # energyErr[:, 0],
 
         # np.log(reco_pt[:, 1]),
         # reco_eta[:, 1],

@@ -54,6 +54,13 @@ def build_arrays(events, pt_min=15):
     hoe      = ak.to_numpy(events["Electron_hoe"])
     scEtOverPt    = ak.to_numpy(events["Electron_scEtOverPt"])
     eInvMinusPInv = ak.to_numpy(events["Electron_eInvMinusPInv"])
+    r9 = ak.to_numpy(events["Electron_r9"])
+    deltaEtaSC = ak.to_numpy(events["Electron_deltaEtaSC"])
+    PV_npvs = ak.to_numpy(events["PV_npvs"])
+    Pileup_nTrueInt = ak.to_numpy(events["Pileup_nTrueInt"])
+    rho = ak.to_numpy(events["fixedGridRhoFastjetAll"])
+    ip3d = ak.to_numpy(events["Electron_ip3d"])
+    energyErr = ak.to_numpy(events["Electron_energyErr"])
 
     true_pt  = ak.to_numpy(events["GenDressedLepton_pt"])
     true_eta = ak.to_numpy(events["GenDressedLepton_eta"])
@@ -72,6 +79,14 @@ def build_arrays(events, pt_min=15):
     hoe       = hoe[mask]
     scEtOverPt    = scEtOverPt[mask]
     eInvMinusPInv = eInvMinusPInv[mask]
+    r9 = r9[mask]
+    deltaEtaSC = deltaEtaSC[mask]
+
+    PV_npvs = PV_npvs[mask]
+    Pileup_nTrueInt = Pileup_nTrueInt[mask]
+    rho = rho[mask]
+    ip3d  = ip3d[mask]
+    energyErr = energyErr[mask]
 
     true_pt   = true_pt[mask]
     true_eta  = true_eta[mask]
@@ -99,6 +114,12 @@ def build_arrays(events, pt_min=15):
         hoe[:, 0],
         scEtOverPt[:, 0],
         eInvMinusPInv[:, 0],
+        r9[:, 0],
+        deltaEtaSC[:, 0],
+
+        PV_npvs,
+        Pileup_nTrueInt,
+        rho,
 
         np.log(reco_pt[:, 1]),
         reco_eta[:, 1],
@@ -110,6 +131,8 @@ def build_arrays(events, pt_min=15):
         hoe[:, 1],
         scEtOverPt[:, 1],
         eInvMinusPInv[:, 1],
+        r9[:, 1],
+        deltaEtaSC[:, 1],
     ])
 
     # --- regression target: log(m_truth / m_reco) ---
