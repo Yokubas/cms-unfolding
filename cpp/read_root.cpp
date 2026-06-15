@@ -65,7 +65,12 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     tree->SetBranchStatus("Electron_eInvMinusPInv", true);
     tree->SetBranchStatus("Electron_r9", true);
     tree->SetBranchStatus("Electron_deltaEtaSC", true);
-    
+    tree->SetBranchStatus("Electron_energyErr", true);
+    tree->SetBranchStatus("PV_npvs", true);
+    tree->SetBranchStatus("Pileup_nTrueInt", true);
+    tree->SetBranchStatus("fixedGridRhoFastjetAll", true);
+    tree->SetBranchStatus("Electron_ip3d", true);
+
     tree->SetBranchStatus("GenDressedLepton_eta", true);
     tree->SetBranchStatus("GenDressedLepton_phi", true);
     tree->SetBranchStatus("GenDressedLepton_pt", true);
@@ -77,8 +82,10 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     Float_t Electron_phi[100], Electron_eta[100], Electron_pt[100], Electron_pfRelIso03_all[100];
     // Training
     Float_t Electron_miniPFRelIso_all[100], Electron_sieie[100], Electron_dxy[100], Electron_dz[100], Electron_hoe[100], Electron_scEtOverPt[100];
-    Float_t Electron_eInvMinusPInv[100], Electron_r9[100], Electron_deltaEtaSC[100];
-    
+    Float_t Electron_eInvMinusPInv[100], Electron_r9[100], Electron_deltaEtaSC[100], Electron_ip3d[100], Electron_energyErr[100];
+    Int_t PV_npvs;
+    Float_t Pileup_nTrueInt, fixedGridRhoFastjetAll;
+
     Int_t Electron_cutBased[100];
     Float_t genWeight = 1.0;
     Bool_t HLT_Ele23_Ele12;
@@ -90,7 +97,9 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
 
     // Training out
     Float_t out_Electron_miniPFRelIso_all[2], out_Electron_sieie[2], out_Electron_dxy[2], out_Electron_dz[2], out_Electron_hoe[2], out_Electron_scEtOverPt[2];
-    Float_t out_Electron_eInvMinusPInv[2], out_Electron_r9[2], out_Electron_deltaEtaSC[2];
+    Float_t out_Electron_eInvMinusPInv[2], out_Electron_r9[2], out_Electron_deltaEtaSC[2], out_Electron_ip3d[2], out_Electron_energyErr[2];
+    Int_t out_PV_npvs;
+    Float_t out_Pileup_nTrueInt, out_fixedGridRhoFastjetAll;
 
     Float_t out_Electron_pt[2], out_Electron_phi[2], out_Electron_eta[2];
     Float_t out_GenDressedLepton_pt[2], out_GenDressedLepton_phi[2], out_GenDressedLepton_eta[2];
@@ -117,6 +126,11 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     tree->SetBranchAddress("Electron_eInvMinusPInv", &Electron_eInvMinusPInv);
     tree->SetBranchAddress("Electron_r9", &Electron_r9);
     tree->SetBranchAddress("Electron_deltaEtaSC", &Electron_deltaEtaSC);
+    tree->SetBranchAddress("Electron_energyErr", &Electron_energyErr);
+    tree->SetBranchAddress("PV_npvs", &PV_npvs);
+    tree->SetBranchAddress("Pileup_nTrueInt", &Pileup_nTrueInt);
+    tree->SetBranchAddress("fixedGridRhoFastjetAll", &fixedGridRhoFastjetAll);
+    tree->SetBranchAddress("Electron_ip3d", &Electron_ip3d);
 
     tree->SetBranchAddress("GenDressedLepton_eta", &GenDressedLepton_eta);
     tree->SetBranchAddress("GenDressedLepton_phi", &GenDressedLepton_phi);
@@ -142,6 +156,11 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
     outTree->Branch("Electron_eInvMinusPInv", &out_Electron_eInvMinusPInv, "Electron_eInvMinusPInv[2]/F");
     outTree->Branch("Electron_r9", &out_Electron_r9, "Electron_r9[2]/F");
     outTree->Branch("Electron_deltaEtaSC", &out_Electron_deltaEtaSC, "Electron_deltaEtaSC[2]/F");
+    outTree->Branch("Electron_energyErr", &out_Electron_energyErr, "Electron_energyErr[2]/F");
+    outTree->Branch("PV_npvs", &out_PV_npvs, "PV_npvs/I");
+    outTree->Branch("Pileup_nTrueInt", &out_Pileup_nTrueInt, "Pileup_nTrueInt/F");
+    outTree->Branch("fixedGridRhoFastjetAll", &out_fixedGridRhoFastjetAll, "fixedGridRhoFastjetAll/F");
+    outTree->Branch("Electron_ip3d", &out_Electron_ip3d, "Electron_ip3d[2]/F");
 
     outTree->Branch("genWeight", &out_genWeight, "genWeight/F");
 
@@ -254,6 +273,16 @@ void writeRootFile(TTree* tree, const char* outFileName, double& sumGenWeight){
                         
                         out_Electron_deltaEtaSC[0] = Electron_deltaEtaSC[leading];
                         out_Electron_deltaEtaSC[1] = Electron_deltaEtaSC[subleading];
+
+                        out_Electron_energyErr[0] = Electron_energyErr[leading];
+                        out_Electron_energyErr[1] = Electron_energyErr[subleading];
+                        
+                        out_Electron_ip3d[0] = Electron_ip3d[leading];
+                        out_Electron_ip3d[1] = Electron_ip3d[subleading];
+
+                        out_PV_npvs = PV_npvs;
+                        out_Pileup_nTrueInt = Pileup_nTrueInt;
+                        out_fixedGridRhoFastjetAll = fixedGridRhoFastjetAll;
 
                         out_genWeight = genWeight;
 
